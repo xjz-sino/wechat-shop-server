@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱心生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .heart {
+            position: absolute;
+            bottom: -50px;
+            opacity: 0;
+            animation: floatUp linear infinite;
+            pointer-events: none;
+        }
+
+        .heart::before,
+        .heart::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 160%;
+            background: currentColor;
+            border-radius: 50% 50% 0 0;
+        }
+
+        .heart::before {
+            left: 50%;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+
+        .heart::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.9;
+            }
+            90% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(-110vh) rotate(360deg) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-group input[type="range"] {
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ff4d6d;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+        }
+
+        .control-group select {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .control-group select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff4d6d, #c9184a);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 77, 109, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .title {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            color: #fff;
+            font-size: 42px;
+            font-weight: 700;
+            text-shadow: 0 0 30px rgba(255, 77, 109, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .subtitle {
+            position: fixed;
+            top: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            letter-spacing: 3px;
+        }
+
+        .click-heart {
+            position: absolute;
+            pointer-events: none;
+            animation: clickBurst 1s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes clickBurst {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .static-hearts {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .static-heart {
+            font-size: 30px;
+            animation: twinkle 1.5s ease-in-out infinite;
+        }
+
+        .floating-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            color: #ff4d6d;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            animation: textFloat 2s ease-out forwards;
+        }
+
+        @keyframes textFloat {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -80%) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hearts-container" id="heartsContainer"></div>
+
+    <h1 class="title">❤ 爱心生成器 ❤</h1>
+    <p class="subtitle">点击屏幕或调整参数创造属于你的爱心</p>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>爱心数量</label>
+            <input type="range" id="heartCount" min="5" max="50" value="20">
+        </div>
+        <div class="control-group">
+            <label>动画速度</label>
+            <select id="speed">
+                <option value="slow">慢</option>
+                <option value="normal" selected>中</option>
+                <option value="fast">快</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>动画样式</label>
+            <select id="style">
+                <option value="float">漂浮</option>
+                <option value="fall">下落</option>
+                <option value="both" selected>混合</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" onclick="regenerateHearts()">生成爱心</button>
+        <button class="btn btn-secondary" onclick="toggleBurst()">爆炸效果</button>
+    </div>
+
+    <div class="static-hearts">
+        <span class="static-heart" style="animation-delay: 0s;">❤️</span>
+        <span class="static-heart" style="animation-delay: 0.3s;">💕</span>
+        <span class="static-heart" style="animation-delay: 0.6s;">💗</span>
+        <span class="static-heart" style="animation-delay: 0.9s;">💖</span>
+        <span class="static-heart" style="animation-delay: 1.2s;">💝</span>
+    </div>
+
+    <script>
+        let hearts = [];
+        let burstMode = false;
+
+        const speedMultipliers = {
+            slow: 1.5,
+            normal: 1,
+            fast: 0.6
+        };
+
+        async function fetchHearts() {
+            const count = document.getElementById('heartCount').value;
+            const speed = document.getElementById('speed').value;
+            const style = document.getElementById('style').value;
+
+            try {
+                const response = await fetch(`/api/hearts?count=${count}`);
+                hearts = await response.json();
+                createHeartElements(speed, style);
+            } catch (error) {
+                console.error('获取爱心失败:', error);
+            }
+        }
+
+        function createHeartElements(speed, style) {
+            const container = document.getElementById('heartsContainer');
+            container.innerHTML = '';
+
+            const multiplier = speedMultipliers[speed];
+
+            hearts.forEach((heart, index) => {
+                const heartEl = document.createElement('div');
+                heartEl.className = 'heart';
+                heartEl.style.left = `${heart.left}%`;
+                heartEl.style.width = `${heart.size}px`;
+                heartEl.style.height = `${heart.size}px`;
+                heartEl.style.color = heart.color;
+
+                const duration = heart.duration * multiplier;
+                heartEl.style.animationDuration = `${duration}s`;
+                heartEl.style.animationDelay = `${heart.delay * multiplier}s`;
+
+                container.appendChild(heartEl);
+            });
+        }
+
+        function regenerateHearts() {
+            const speed = document.getElementById('speed').value;
+            const style = document.getElementById('style').value;
+            createHeartElements(speed, style);
+
+            showFloatingText('❤️');
+        }
+
+        function toggleBurst() {
+            burstMode = !burstMode;
+            const btn = document.querySelector('.btn-secondary');
+            btn.textContent = burstMode ? '关闭爆炸' : '爆炸效果';
+        }
+
+        function showFloatingText(text) {
+            const textEl = document.createElement('div');
+            textEl.className = 'floating-text';
+            textEl.textContent = text;
+            document.body.appendChild(textEl);
+
+            setTimeout(() => {
+                textEl.remove();
+            }, 2000);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.controls')) return;
+
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.style.left = `${(e.clientX / window.innerWidth) * 100}%`;
+            heart.style.top = `${(e.clientY / window.innerHeight) * 100}%`;
+            heart.style.width = '30px';
+            heart.style.height = '30px';
+            heart.style.color = ['#ff4d6d', '#ff69b4', '#ff1493', '#c9184a'][Math.floor(Math.random() * 4)];
+            heart.style.animation = 'none';
+            heart.style.opacity = '1';
+
+            document.getElementById('heartsContainer').appendChild(heart);
+
+            if (burstMode) {
+                for (let i = 0; i < 5; i++) {
+                    const burst = document.createElement('div');
+                    burst.className = 'click-heart';
+                    burst.style.left = `${(e.clientX / window.innerWidth) * 100}%`;
+                    burst.style.top = `${(e.clientY / window.innerHeight) * 100}%`;
+                    burst.style.width = '20px';
+                    burst.style.height = '20px';
+                    burst.style.color = ['#ff4d6d', '#ff69b4', '#ff1493'][Math.floor(Math.random() * 3)];
+                    burst.style.animationDelay = `${i * 0.1}s`;
+
+                    const burstHeart = document.createElement('div');
+                    burstHeart.className = 'heart';
+                    burstHeart.style.width = '15px';
+                    burstHeart.style.height = '15px';
+                    burstHeart.style.color = burst.style.color;
+                    burst.appendChild(burstHeart);
+
+                    document.body.appendChild(burst);
+                    setTimeout(() => burst.remove(), 1000);
+                }
+            }
+
+            setTimeout(() => heart.remove(), 3000);
+        });
+
+        document.getElementById('heartCount').addEventListener('input', regenerateHearts);
+        document.getElementById('speed').addEventListener('change', regenerateHearts);
+        document.getElementById('style').addEventListener('change', regenerateHearts);
+
+        fetchHearts();
+    </script>
+</body>
+</html>
