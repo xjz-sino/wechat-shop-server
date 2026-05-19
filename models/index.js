@@ -627,6 +627,51 @@ const HomeConfig = sequelize.define('HomeConfig', {
   updatedAt: 'updated_at'
 });
 
+const Return = sequelize.define('Return', {
+  id: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  order_id: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    comment: '订单ID'
+  },
+  user_id: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    comment: '用户ID'
+  },
+  reason: {
+    type: DataTypes.STRING(500),
+    allowNull: false,
+    comment: '退货原因'
+  },
+  description: {
+    type: DataTypes.TEXT,
+    comment: '退货说明'
+  },
+  images: {
+    type: DataTypes.TEXT,
+    comment: '退货图片JSON'
+  },
+  status: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '0-待处理 1-处理中 2-已完成 3-已拒绝'
+  },
+  admin_remark: {
+    type: DataTypes.STRING(500),
+    comment: '管理员备注'
+  }
+}, {
+  tableName: 'returns',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+});
+
 User.hasMany(Address, { foreignKey: 'user_id', as: 'addresses' });
 Address.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
@@ -673,6 +718,11 @@ User.hasMany(User, { foreignKey: 'referrer_id', as: 'referred' });
 Session.hasMany(Message, { foreignKey: 'session_id', as: 'messages' });
 Message.belongsTo(Session, { foreignKey: 'session_id', as: 'session' });
 
+Order.hasMany(Return, { foreignKey: 'order_id', as: 'returns' });
+Return.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+User.hasMany(Return, { foreignKey: 'user_id', as: 'returns' });
+Return.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
 module.exports = {
   sequelize,
   User,
@@ -688,5 +738,6 @@ module.exports = {
   Session,
   Message,
   Admin,
-  HomeConfig
+  HomeConfig,
+  Return
 };

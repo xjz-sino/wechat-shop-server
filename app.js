@@ -11,6 +11,8 @@ const reviewRoutes = require('./routes/review');
 const paymentRoutes = require('./routes/payment');
 const adminRoutes = require('./routes/admin');
 const serviceRoutes = require('./routes/service');
+const returnRoutes = require('./routes/return');
+const adminReturnRoutes = require('./routes/adminReturn');
 
 const app = express();
 
@@ -42,6 +44,8 @@ app.use('/api', reviewRoutes);
 app.use('/api', paymentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api', serviceRoutes);
+app.use('/api', returnRoutes);
+app.use('/admin', adminReturnRoutes);
 
 app.use((err, req, res, next) => {
   console.error('Error:', err);
