@@ -1,4 +1,4 @@
-const { Session, Message, User, sequelize } = require('../models');
+const { Session, Message, User, Admin, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 const chatController = {
@@ -95,7 +95,11 @@ const chatController = {
         where: { session_id: sessionId },
         order: [['created_at', 'DESC']],
         limit: parseInt(size),
-        offset: parseInt(offset)
+        offset: parseInt(offset),
+        include: [
+          { model: User, as: 'user', attributes: ['avatar', 'nickname'], required: false },
+          { model: Admin, as: 'admin', attributes: ['avatar', 'nickname'], required: false }
+        ]
       });
       
       res.json({
@@ -106,7 +110,9 @@ const chatController = {
             id: msg.id,
             content: msg.content,
             senderType: msg.sender_type,
-            createdAt: msg.created_at
+            createdAt: msg.created_at,
+            avatar: msg.sender_type === 1 ? (msg.user?.avatar || '') : (msg.admin?.avatar || ''),
+            nickname: msg.sender_type === 1 ? (msg.user?.nickname || '') : (msg.admin?.nickname || '客服')
           })).reverse(),
           total: count
         }
@@ -143,9 +149,21 @@ const chatController = {
         order: [['updated_at', 'DESC']]
       });
       
+      // 按用户去重，只保留每个用户最新的会话
+      const userSessionMap = {};
+      sessions.forEach(session => {
+        if (!userSessionMap[session.user_id] || 
+            (!userSessionMap[session.user_id] || 
+             new Date(session.updated_at) > new Date(userSessionMap[session.user_id].updated_at))) {
+          userSessionMap[session.user_id] = session;
+        }
+      });
+      
+      const uniqueSessions = Object.values(userSessionMap);
+      
       // 获取每个会话的最后一条消息和未读消息数
       const sessionsWithStats = await Promise.all(
-        sessions.map(async (session) => {
+        uniqueSessions.map(async (session) => {
           const lastMessage = await Message.findOne({
             where: { session_id: session.id },
             order: [['created_at', 'DESC']]
@@ -298,6 +316,34 @@ const chatController = {
       });
     } catch (error) {
       console.error('Close session error:', error);
+      res.status(500).json({ code: 500, message: '服务器错误' });
+    }
+  },
+
+  // 删除会话（后台管理）
+  async deleteSession(req, res) {
+    try {
+      const { sessionId } = req.params;
+      
+      const session = await Session.findByPk(sessionId);
+      if (!session) {
+        return res.status(404).json({ code: 404, message: '会话不存在' });
+      }
+      
+      // 先删除相关消息
+      await Message.destroy({
+        where: { session_id: sessionId }
+      });
+      
+      // 再删除会话
+      await session.destroy();
+      
+      res.json({
+        code: 0,
+        message: '会话已删除'
+      });
+    } catch (error) {
+      console.error('Delete session error:', error);
       res.status(500).json({ code: 500, message: '服务器错误' });
     }
   },

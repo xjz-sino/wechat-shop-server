@@ -33,7 +33,9 @@ router.get('/orders/:id', adminAuth, orderManageController.getOrder);
 router.put('/orders/:id', adminAuth, orderManageController.updateOrder);
 router.delete('/orders/:id', adminAuth, orderManageController.deleteOrder);
 router.put('/orders/:id/ship', adminAuth, orderManageController.shipOrder);
+router.put('/orders/:id/confirm', adminAuth, orderManageController.confirmOrder);
 router.put('/orders/:id/refund', adminAuth, orderManageController.refundOrder);
+router.put('/orders/:id/refund/confirm', adminAuth, orderManageController.confirmRefund);
 
 router.get('/users', adminAuth, userManageController.getUsers);
 router.get('/users/:id', adminAuth, userManageController.getUser);
@@ -48,6 +50,7 @@ router.get('/chat/sessions', adminAuth, chatController.getAllSessions);
 router.get('/chat/sessions/:sessionId', adminAuth, chatController.getSessionMessages);
 router.post('/chat/reply', adminAuth, chatController.replyMessage);
 router.put('/chat/sessions/:sessionId/close', adminAuth, chatController.closeSession);
+router.delete('/chat/sessions/:sessionId', adminAuth, chatController.deleteSession);
 router.get('/chat/unread-count', adminAuth, chatController.getUnreadCount);
 
 router.get('/statistics/sales', adminAuth, statisticsController.getSalesStatistics);

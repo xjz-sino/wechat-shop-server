@@ -187,6 +187,28 @@ const orderManageController = {
     }
   },
 
+  async confirmOrder(req, res) {
+    try {
+      const { id } = req.params;
+
+      const order = await Order.findByPk(id);
+      if (!order) {
+        return res.status(404).json({ code: 404, message: '订单不存在' });
+      }
+
+      if (order.status !== 2) {
+        return res.status(400).json({ code: 400, message: '订单状态不允许完成' });
+      }
+
+      await order.update({ status: 3, receive_time: new Date() });
+
+      res.json({ code: 0, message: '订单已完成' });
+    } catch (error) {
+      console.error('Confirm order error:', error);
+      res.status(500).json({ code: 500, message: '服务器错误' });
+    }
+  },
+
   async refundOrder(req, res) {
     try {
       const { id } = req.params;
@@ -198,9 +220,31 @@ const orderManageController = {
 
       await order.update({ status: 5 });
 
-      res.json({ code: 0, message: '退款成功' });
+      res.json({ code: 0, message: '已设置为退款中' });
     } catch (error) {
       console.error('Refund order error:', error);
+      res.status(500).json({ code: 500, message: '服务器错误' });
+    }
+  },
+
+  async confirmRefund(req, res) {
+    try {
+      const { id } = req.params;
+
+      const order = await Order.findByPk(id);
+      if (!order) {
+        return res.status(404).json({ code: 404, message: '订单不存在' });
+      }
+
+      if (order.status !== 5) {
+        return res.status(400).json({ code: 400, message: '订单状态不是退款中' });
+      }
+
+      await order.update({ status: 6 });
+
+      res.json({ code: 0, message: '退款成功' });
+    } catch (error) {
+      console.error('Confirm refund error:', error);
       res.status(500).json({ code: 500, message: '服务器错误' });
     }
   },

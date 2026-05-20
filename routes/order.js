@@ -9,5 +9,6 @@ router.get('/orders', auth, orderController.getOrders);
 router.get('/orders/:id', auth, orderController.getOrderDetail);
 router.put('/orders/:id/cancel', auth, orderController.cancelOrder);
 router.put('/orders/:id/confirm', auth, orderController.confirmReceive);
+router.post('/orders/:id/refund', auth, orderController.refundOrder);
 
 module.exports = router;

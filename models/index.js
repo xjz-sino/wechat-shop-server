@@ -717,6 +717,8 @@ User.hasMany(User, { foreignKey: 'referrer_id', as: 'referred' });
 
 Session.hasMany(Message, { foreignKey: 'session_id', as: 'messages' });
 Message.belongsTo(Session, { foreignKey: 'session_id', as: 'session' });
+Message.belongsTo(User, { foreignKey: 'sender_id', as: 'user', constraints: false });
+Message.belongsTo(Admin, { foreignKey: 'sender_id', as: 'admin', constraints: false });
 
 Order.hasMany(Return, { foreignKey: 'order_id', as: 'returns' });
 Return.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });

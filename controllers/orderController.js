@@ -253,7 +253,11 @@ const orderController = {
 
       const where = { user_id: req.userId };
       if (status !== undefined && status !== '') {
-        where.status = parseInt(status);
+        if (status.includes(',')) {
+          where.status = status.split(',').map(s => parseInt(s.trim()));
+        } else {
+          where.status = parseInt(status);
+        }
       }
 
       const { count, rows } = await Order.findAndCountAll({
@@ -274,6 +278,8 @@ const orderController = {
         freightAmount: parseFloat(o.freight_amount),
         payAmount: parseFloat(o.pay_amount),
         createdAt: o.created_at,
+        refundReason: o.refund_reason,
+        refundDescription: o.refund_description,
         items: o.items.map(i => ({
           id: i.id,
           productId: i.product_id,
@@ -323,6 +329,9 @@ const orderController = {
           remark: order.remark,
           payTime: order.pay_time,
           createdAt: order.created_at,
+          shippingCompany: order.shipping_company,
+          shippingNo: order.shipping_no,
+          shippingTime: order.shipping_time,
           receiver: {
             name: order.receiver_name,
             phone: order.receiver_phone,
@@ -378,15 +387,64 @@ const orderController = {
         return res.status(404).json({ code: 404, message: '订单不存在' });
       }
 
-      if (order.status !== 3) {
+      if (order.status !== 2) {
         return res.status(400).json({ code: 400, message: '订单状态不允许确认收货' });
       }
 
-      await order.update({ status: 4, receive_time: new Date() });
+      await order.update({ status: 3, receive_time: new Date() });
 
       res.json({ code: 0, message: '确认收货成功' });
     } catch (error) {
       console.error('Confirm receive error:', error);
+      res.status(500).json({ code: 500, message: '服务器错误' });
+    }
+  },
+
+  async refundOrder(req, res) {
+    try {
+      const { id } = req.params;
+      const { reason, description } = req.body;
+
+      const order = await Order.findOne({ where: { id, user_id: req.userId } });
+      if (!order) {
+        return res.status(404).json({ code: 404, message: '订单不存在' });
+      }
+
+      if (order.status !== 1) {
+        return res.status(400).json({ code: 400, message: '只有待发货状态的订单可以申请退款' });
+      }
+
+      await order.update({ 
+        status: 5,
+        refund_reason: reason,
+        refund_description: description 
+      });
+
+      res.json({ code: 0, message: '退款申请提交成功' });
+    } catch (error) {
+      console.error('Refund order error:', error);
+      res.status(500).json({ code: 500, message: '服务器错误' });
+    }
+  },
+
+  async confirmRefund(req, res) {
+    try {
+      const { id } = req.params;
+
+      const order = await Order.findOne({ where: { id } });
+      if (!order) {
+        return res.status(404).json({ code: 404, message: '订单不存在' });
+      }
+
+      if (order.status !== 5) {
+        return res.status(400).json({ code: 400, message: '订单状态不是退款中' });
+      }
+
+      await order.update({ status: 6 });
+
+      res.json({ code: 0, message: '退款成功' });
+    } catch (error) {
+      console.error('Confirm refund error:', error);
       res.status(500).json({ code: 500, message: '服务器错误' });
     }
   }
